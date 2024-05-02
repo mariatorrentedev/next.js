@@ -182,6 +182,17 @@ export interface NextJsWebpackConfig {
   ): any
 }
 
+/**
+ * Set of options for the react compiler next.js
+ * currently supports.
+ *
+ * This can be changed without breaking changes while supporting
+ * react compiler in the experimental phase.
+ */
+export interface ReactCompilerOptions {
+  compilationMode?: 'infer' | 'annotation' | 'all'
+}
+
 export interface ExperimentalConfig {
   flyingShuttle?: boolean
   prerenderEarlyExit?: boolean
@@ -461,6 +472,12 @@ export interface ExperimentalConfig {
    * Set a default test runner to be used by `next experimental-test`.
    */
   defaultTestRunner?: SupportedTestRunners
+  /**
+   * Enable experimental react compiler optimization.
+   * Configuration accepts partial config object to the compiler, if provided
+   * compiler will be enabled.
+   */
+  reactCompilerOptions?: ReactCompilerOptions
 }
 
 export type ExportPathMap = {

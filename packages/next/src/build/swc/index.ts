@@ -16,9 +16,12 @@ import type {
   TurboRuleConfigItemOptions,
 } from '../../server/config-shared'
 import { isDeepStrictEqual } from 'util'
-import type { DefineEnvPluginOptions } from '../webpack/plugins/define-env-plugin'
-import { getDefineEnv } from '../webpack/plugins/define-env-plugin'
+import {
+  type DefineEnvPluginOptions,
+  getDefineEnv,
+} from '../webpack/plugins/define-env-plugin'
 import type { PageExtensions } from '../page-extensions-type'
+import { getReactCompilerLoader } from '../get-babel-loader-config'
 
 const nextVersion = process.env.__NEXT_VERSION as string
 
@@ -1104,12 +1107,61 @@ function bindingToApi(binding: any, _wasm: boolean) {
     }
   }
 
+  /**
+   * Returns a new copy of next.js config object to avoid mutating the original.
+   *
+   * Also it does some augmentation to the configuration as well, for example set the
+   * turbopack's rules if `experimental.reactCompilerOptions` is set.
+   */
+  function augmentNextConfig(
+    nextConfig: NextConfigComplete,
+    projectPath: string
+  ): Record<string, any> {
+    let ret = { ...(nextConfig as any) }
+
+    const reactCompilerOptions = ret.experimental?.reactCompilerOptions
+
+    // It is not easy to set the rules inside of rust as resolving, and passing the context identical to the webpack
+    // config is bit hard, also we can reuse same codes between webpack config in here.
+    if (reactCompilerOptions) {
+      if (!ret.experimental.turbo) {
+        ret.experimental.turbo = {}
+      }
+
+      if (!ret.experimental.turbo.rules) {
+        ret.experimental.turbo.rules = {}
+      }
+
+      // [TODO]: need to enable against '*.ts'
+      for (const key of ['*.ts', '*.js', '*.jsx', '*.tsx']) {
+        if (ret.experimental.turbo.rules[key]) {
+          Log.warn(
+            `Next config have a rule for the ${key} for Turbopack, not able to enable react compiler automatically. Manually add babel-loader's plugin insetad.`
+          )
+          break
+        }
+        ret.experimental.turbo.rules[key] = {
+          foreign: false,
+          loaders: [
+            getReactCompilerLoader(
+              nextConfig.experimental.reactCompilerOptions,
+              projectPath,
+              ret.dev
+            ),
+          ],
+        }
+      }
+    }
+
+    return ret
+  }
+
   async function serializeNextConfig(
     nextConfig: NextConfigComplete,
     projectPath: string
   ): Promise<string> {
     // Avoid mutating the existing `nextConfig` object.
-    let nextConfigSerializable = { ...(nextConfig as any) }
+    let nextConfigSerializable = augmentNextConfig(nextConfig, projectPath)
 
     nextConfigSerializable.generateBuildId =
       await nextConfig.generateBuildId?.()
@@ -1118,8 +1170,10 @@ function bindingToApi(binding: any, _wasm: boolean) {
     nextConfigSerializable.exportPathMap = {}
     nextConfigSerializable.webpack = nextConfig.webpack && {}
 
-    if (nextConfig.experimental?.turbo?.rules) {
-      ensureLoadersHaveSerializableOptions(nextConfig.experimental.turbo?.rules)
+    if (nextConfigSerializable.experimental?.turbo?.rules) {
+      ensureLoadersHaveSerializableOptions(
+        nextConfigSerializable.experimental.turbo?.rules
+      )
     }
 
     nextConfigSerializable.modularizeImports =

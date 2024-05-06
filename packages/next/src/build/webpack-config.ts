@@ -509,7 +509,7 @@ export default async function getBaseWebpackConfig(
     // This will cause some performance overhead but
     // acceptable as Babel will not be recommended.
     getSwcLoader({
-      serverComponents: false,
+      serverComponents: true,
       bundleLayer: WEBPACK_LAYERS.middleware,
     }),
     babelLoader,
@@ -560,7 +560,7 @@ export default async function getBaseWebpackConfig(
   const apiRoutesLayerLoaders =
     hasAppDir && useSWCLoader
       ? getSwcLoader({
-          serverComponents: false,
+          serverComponents: true,
           bundleLayer: WEBPACK_LAYERS.api,
         })
       : defaultLoaders.babel
@@ -1203,10 +1203,7 @@ export default async function getBaseWebpackConfig(
         // Alias server-only and client-only to proper exports based on bundling layers
         {
           issuerLayer: {
-            or: [
-              ...WEBPACK_LAYERS.GROUP.serverOnly,
-              ...WEBPACK_LAYERS.GROUP.nonClientServerTarget,
-            ],
+            or: WEBPACK_LAYERS.GROUP.serverOnly,
           },
           resolve: {
             // Error on client-only but allow server-only
@@ -1215,10 +1212,7 @@ export default async function getBaseWebpackConfig(
         },
         {
           issuerLayer: {
-            not: [
-              ...WEBPACK_LAYERS.GROUP.serverOnly,
-              ...WEBPACK_LAYERS.GROUP.nonClientServerTarget,
-            ],
+            not: WEBPACK_LAYERS.GROUP.serverOnly,
           },
           resolve: {
             // Error on server-only but allow client-only
@@ -1247,10 +1241,7 @@ export default async function getBaseWebpackConfig(
           ],
           loader: 'next-invalid-import-error-loader',
           issuerLayer: {
-            not: [
-              ...WEBPACK_LAYERS.GROUP.serverOnly,
-              ...WEBPACK_LAYERS.GROUP.nonClientServerTarget,
-            ],
+            not: WEBPACK_LAYERS.GROUP.serverOnly,
           },
           options: {
             message:
@@ -1267,7 +1258,7 @@ export default async function getBaseWebpackConfig(
           ],
           loader: 'empty-loader',
           issuerLayer: {
-            or: WEBPACK_LAYERS.GROUP.nonClientServerTarget,
+            not: WEBPACK_LAYERS.GROUP.serverOnly,
           },
         },
         ...(hasAppDir

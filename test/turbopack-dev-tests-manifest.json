@@ -1205,7 +1205,6 @@
       "Error overlay - RSC build errors should error when PureComponent from react is used in server component",
       "Error overlay - RSC build errors should error when createContext from react is used in server component",
       "Error overlay - RSC build errors should error when createFactory from react is used in server component",
-      "Error overlay - RSC build errors should error when findDOMNode from react-dom is used in server component",
       "Error overlay - RSC build errors should error when flushSync from react-dom is used in server component",
       "Error overlay - RSC build errors should error when page component export is not valid",
       "Error overlay - RSC build errors should error when page component export is not valid on initial load",
@@ -4600,6 +4599,15 @@
       "parallel-routes-revalidation should not trigger the intercepted route when lazy-fetching missing data",
       "parallel-routes-revalidation should refresh the correct page when a server action triggers a redirect",
       "parallel-routes-revalidation should submit the action and revalidate the page data"
+    ],
+    "failed": [],
+    "pending": [],
+    "flakey": [],
+    "runtimeError": false
+  },
+  "test/e2e/app-dir/parallel-routes-root-slot/parallel-routes-root-slot.test.ts": {
+    "passed": [
+      "parallel-routes-root-slot Should render the root parallel route"
     ],
     "failed": [],
     "pending": [],
